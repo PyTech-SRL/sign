@@ -87,12 +87,26 @@ class Common(TransactionCase):
                 "type": "product",
             }
         )
+        cls.ppe_request = cls._request_product(cls.employee, cls.ppe_product)
 
-        ppe_request_form = Form(
-            cls.env["hr.personal.equipment.request"].with_user(cls.user.id)
+        cls.ppe_sn_product = cls.ppe_product.copy(
+            default={
+                "name": "Test PPE Product with Serial Number",
+                "tracking": "serial",
+            }
         )
-        ppe_request_form.employee_id = cls.employee
+        cls.ppe_sn_request = cls._request_product(
+            cls.employee, cls.ppe_sn_product, quantity=2
+        )
+
+    @classmethod
+    def _request_product(cls, employee, product, quantity=1):
+        ppe_request_form = Form(
+            cls.env["hr.personal.equipment.request"].with_user(employee.user_id)
+        )
+        ppe_request_form.employee_id = employee
         ppe_request_form.location_id = cls.personal_equipment_location
         with ppe_request_form.line_ids.new() as line:
-            line.product_id = cls.ppe_product
-        cls.ppe_request = ppe_request_form.save()
+            line.product_id = product
+            line.quantity = quantity
+        return ppe_request_form.save()
